@@ -28,6 +28,7 @@ import threading
 import concurrent.futures
 import requests
 import tqdm
+import subprocess
 
 from instagram_scraper.constants import *
 
@@ -80,6 +81,14 @@ class InstagramScraper(object):
     """InstagramScraper scrapes and downloads an instagram user's photos and videos"""
 
     def __init__(self, **kwargs):
+
+        subprocess.run(["node", "scraper.js", "2321312312", "103324980"])
+        return_code = os.system("echo 'May the force be with you'")
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print("the return code of running the subprocess is " + str(return_code) + "the dir path is:" + dir_path)
+        quit(0)
+        return
+
         default_attr = dict(username='', usernames=[], filename=None,
                             login_user=None, login_pass=None,
                             destination='./', retain_username=False, interactive=False,
@@ -118,6 +127,7 @@ class InstagramScraper(object):
         self.logger = InstagramScraper.get_logger(level=logging.DEBUG, verbose=default_attr.get('verbose'))
 
         self.posts = []
+        self.locations = []
         self.session = requests.Session()
         self.session.headers = {'user-agent': CHROME_WIN_UA}
         if self.cookiejar and os.path.exists(self.cookiejar):
@@ -393,6 +403,7 @@ class InstagramScraper(object):
         try:
             for value in self.usernames:
                 self.posts = []
+                self.locations = []
                 self.last_scraped_filemtime = 0
                 greatest_timestamp = 0
                 future_to_item = {}
@@ -443,6 +454,7 @@ class InstagramScraper(object):
                     self.set_last_scraped_timestamp(value, greatest_timestamp)
 
                 if (self.media_metadata or self.comments or self.include_location) and self.posts:
+
                     self.save_json(self.posts, '{0}/{1}.json'.format(dst, value))
         finally:
             self.quit = True
@@ -547,6 +559,12 @@ class InstagramScraper(object):
         if code:
             details = self.__get_media_details(code)
             item['location'] = details.get('location')
+            print(details)
+            #print(item['location']['id'])
+            location = item['location']['id']
+            locationName = item['location']['name']
+            self.locations.append(item['location']['id'])
+            subprocess.run(["node", "scraper.js", locationName , str(location)])
 
     def scrape(self, executor=concurrent.futures.ThreadPoolExecutor(max_workers=MAX_CONCURRENT_DOWNLOADS)):
         """Crawls through and downloads user's media"""
@@ -601,7 +619,9 @@ class InstagramScraper(object):
                         self.set_last_scraped_timestamp(username, greatest_timestamp)
 
                     if (self.media_metadata or self.comments or self.include_location) and self.posts:
-                        self.save_json(self.posts, '{0}/{1}.json'.format(dst, username))
+                        self.save_json(self.posts, '{0}/{1}z.json'.format(dst, username))
+                        self.save_json(self.locations, '{0}/{1}locations.json'.format(dst, username))
+
                 except ValueError:
                     self.logger.error("Unable to scrape user - %s" % username)
         finally:
@@ -672,7 +692,7 @@ class InstagramScraper(object):
         username = user['username']
 
         if self.include_location:
-            media_exec = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+            media_exec = concurrent.futures.ThreadPoolExecutor(max_workers=100)
 
         iter = 0
         for item in tqdm.tqdm(self.query_media_gen(user), desc='Searching {0} for posts'.format(username),
@@ -718,6 +738,7 @@ class InstagramScraper(object):
         if resp is not None and '_sharedData' in resp:
             try:
                 shared_data = resp.split("window._sharedData = ")[1].split(";</script>")[0]
+                print("the user's shared data is " + shared_data)
                 return json.loads(shared_data)
             except (TypeError, KeyError, IndexError):
                 pass
@@ -1024,15 +1045,16 @@ class InstagramScraper(object):
 
         sorted_places = sorted(result['places'], key=itemgetter('position'))
 
-        for item in sorted_places[0:5]:
+        for item in sorted_places[0:5]: #TODO, MAYBE THIS CAN BE EDITED to just say sorted_places
             place = item['place']
-            print('location-id: {0}, title: {1}, subtitle: {2}, city: {3}, lat: {4}, lng: {5}'.format(
+            print('location-id: {0}, title: {1}, subtitle: {2}, city: {3}, lat: {4}, lng: {5}, profile_pic_url: {6}'.format(
                 place['location']['pk'],
                 place['title'],
                 place['subtitle'],
                 place['location']['city'],
                 place['location']['lat'],
-                place['location']['lng']
+                place['location']['lng'],
+                place['location']['profile_pic_url']
             ))
 
     @staticmethod

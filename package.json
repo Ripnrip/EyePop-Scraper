@@ -1,0 +1,24 @@
+{
+  "name": "igf",
+  "version": "1.0.0",
+  "description": "<img src=\"https://camo.githubusercontent.com/9ac4a1f7f5ea0f573451b5ddc06e29c8aa113a85/68747470733a2f2f692e696d6775722e636f6d2f6948326a6468562e706e67\" align=\"right\">",
+  "main": "\t",
+  "scripts": {
+    "test": "\t"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rarcega/instagram-scraper.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rarcega/instagram-scraper/issues"
+  },
+  "homepage": "https://github.com/rarcega/instagram-scraper#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "firebase": "^5.8.3",
+    "request": "^2.88.0"
+  }
+}
